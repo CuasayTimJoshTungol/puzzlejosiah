@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Josiah The Puzzle</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        #level-indicator {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 5px;
+            margin: 20px auto;
+            width: 320px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .piece {
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            border: 2px solid #fff;
+            background-size: 300px 300px;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .piece:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            background: #ff758c;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            background: #ff5177;
+            transform: translateY(-2px);
+        }
+        .stars {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 50px;
+            color: gold;
+            display: none;
+            animation: sparkle 1.5s ease-out;
+        }
+        @keyframes sparkle {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -60%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Josiah The Puzzle</h1>
+    <p id="level-indicator">Level 1</p>
+    <p>Click two pieces to swap them and solve the josiah puzzle!</p>
+    <div id="puzzle-container"></div>
+    <button onclick="shuffle()">Shuffle</button>
+    <div id="stars" class="stars">✨✨✨</div>
+
+    <script>
+        const rows = 3, cols = 3;
+        let pieces = [];
+        let currentLevel = 1;
+        const levelImages = {
+            1: 'picture.png.png',
+            2: 'image.png.png'
+        };
+        const container = document.getElementById("puzzle-container");
+        const levelIndicator = document.getElementById("level-indicator");
+        let firstPick = null;
+
+        function initPuzzle() {
+            pieces = [];
+            container.innerHTML = "";
+
+            for (let i = 0; i < rows * cols; i++) {
+                let div = document.createElement("div");
+                div.classList.add("piece");
+                div.style.backgroundImage = `url('${levelImages[currentLevel]}')`;
+                div.style.backgroundPosition = `-${(i % cols) * 100}px -${Math.floor(i / cols) * 100}px`;
+                div.dataset.index = i;
+                div.addEventListener("click", () => swapPiece(div));
+                pieces.push(div);
+                container.appendChild(div);
+            }
+            shuffle();
+        }
+
+        function shuffle() {
+            do {
+                pieces.sort(() => Math.random() - 0.5);
+            } while (!isSolvable());
+
+            container.innerHTML = "";
+            pieces.forEach(piece => container.appendChild(piece));
+        }
+
+        function swapPiece(piece) {
+            if (!firstPick) {
+                firstPick = piece;
+            } else if (firstPick !== piece) {
+                let firstIndex = pieces.indexOf(firstPick);
+                let secondIndex = pieces.indexOf(piece);
+
+                [pieces[firstIndex], pieces[secondIndex]] = [pieces[secondIndex], pieces[firstIndex]];
+                container.innerHTML = "";
+                pieces.forEach(piece => container.appendChild(piece));
+
+                firstPick = null;
+                checkWin();
+            }
+        }
+
+        function checkWin() {
+            if (pieces.every((piece, index) => parseInt(piece.dataset.index) === index)) {
+                showWinEffect();
+                setTimeout(nextLevel, 2000);
+            }
+        }
+
+        function nextLevel() {
+            if (currentLevel === 1) {
+                currentLevel = 2;
+                levelIndicator.innerText = "Level 2";
+                initPuzzle();
+            } else {
+                shuffle();
+            }
+        }
+
+        function showWinEffect() {
+            let stars = document.getElementById("stars");
+            stars.style.display = "block";
+            setTimeout(() => stars.style.display = "none", 1500);
+        }
+
+        function isSolvable() {
+            let inversionCount = 0;
+            let arr = pieces.map(p => parseInt(p.dataset.index));
+            for (let i = 0; i < arr.length - 1; i++) {
+                for (let j = i + 1; j < arr.length; j++) {
+                    if (arr[i] > arr[j] && arr[i] !== 8 && arr[j] !== 8) {
+                        inversionCount++;
+                    }
+                }
+            }
+            return inversionCount % 2 === 0;
+        }
+
+        initPuzzle();
+    </script>
+</body>
+</html>
